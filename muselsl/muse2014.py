@@ -59,14 +59,15 @@ class Muse2014:
         Function: Connect to the Muse headset, but no streaming is done yet
         Returns: None
         """
-        print('Connecting to %s : %s...' % (self.name if self.name else 'Muse', self.address))
-        self.muse_io = subprocess.Popen('exec ./connect_muse_2014.sh {} {}'.format(self.address, self.port), shell=True)
         if self.connected:
             print("Sorry, headset already connected")
         else:
+            print('Connecting to %s : %s...' % (self.name if self.name else 'Muse', self.address))
+            self.muse_io = subprocess.Popen('./connect_muse_2014.sh {} {}'.format(self.address, self.port), shell=True)
             self.server = osc_server.ThreadingOSCUDPServer(
                     (self.ip, self.port), self._dispatcher)
             print("Serving on {}".format(self.server.server_address))
+            self.connected = True
 
     def start(self):
         """
@@ -100,6 +101,7 @@ class Muse2014:
         """disconnect."""
         if self.muse_io:
             self.muse_io.kill()
+        self.connected = False
 
     def eeg_handler(self, unusedAddr, args, ch1, ch2, ch3, ch4):
         """
@@ -117,6 +119,6 @@ class Muse2014:
 # Please uncomment this part if you want to test the code
 # Trigger a keyboard interrupt if you would like to stop the code
 # if __name__ == "__main__":
-#     muse_2014 = Muse2014()
+#     muse_2014 = Muse2014(address='00:06:66:6B:EB:03')
 #     muse_2014.connect()
 #     muse_2014.start()
