@@ -4,23 +4,16 @@ import pygatt
 import subprocess
 import json
 from sys import platform
-from . import helper
-from .muse import Muse
-from .muse2014 import Muse2014
-from .constants import MUSE_NB_CHANNELS, MUSE_2014_NB_CHANNELS, MUSE_SAMPLING_RATE, MUSE_2014_SAMPLING_RATE, MUSE_SCAN_TIMEOUT, LSL_CHUNK, AUTO_DISCONNECT_DELAY
-
-
-def parse_2014_muses(raw):
-    responses = raw.split(b' ')
-    devices = []
-    for response in responses:
-        devices.append(json.loads(response))
-    return devices
+from helper import resolve_backend
+from muse import Muse
+from muse2014 import Muse2014
+from constants import MUSE_NB_CHANNELS, MUSE_2014_NB_CHANNELS, MUSE_SAMPLING_RATE, MUSE_2014_SAMPLING_RATE, MUSE_SCAN_TIMEOUT, LSL_CHUNK, AUTO_DISCONNECT_DELAY
+import bluetooth
 
 
 # Returns a list of available Muse devices.
 def list_muses(backend='auto', interface=None):
-    backend = helper.resolve_backend(backend)
+    backend = resolve_backend(backend)
 
     if backend == 'gatt':
         interface = interface or 'hci0'
@@ -31,9 +24,9 @@ def list_muses(backend='auto', interface=None):
         return
     elif backend == 'muse-io':
         adapter = None
-        print('Searching for Muses, this may take up to 30 seconds...')
-        raw = subprocess.check_output('./list_muses.sh', shell=True)
-        devices = parse_2014_muses(raw)
+        print('Searching for paired 2014 Muses, this may take up to 10 seconds...')
+        paired_devices = bluetooth.discover_devices(lookup_names=True)
+        devices = [{'name': name, 'address': address} for address, name in paired_devices if 'Muse' in name]
     else:
         adapter = pygatt.BGAPIBackend(serial_port=interface)
 
